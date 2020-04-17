@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+        integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/style.css">
+    <title>Chat App</title>
+</head>
+
+<body>
+    <main class='container'>
+
+        <div class="wrapper">
+
+            <div id="chat" class="message-screen" >
+                
+            </div>
+
+
+            <form action="submit">
+                <div class="input-group mb-1">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text">Name</span>
+                    </div>
+                    <input type="text" class="form-control" placeholder="Name" aria-label="Name"
+                        aria-describedby="name" id="name">
+                </div>
+                <div class="input-group mb-1">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text">Message</span>
+                    </div>
+                    <textarea class="form-control" aria-label="message" id="message"></textarea>
+
+                </div>
+                <button class="btn btn-primary" id="btn" type="button">Send</button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+
+        //  DOM
+        let btn = document.getElementById('btn');
+        let inputName = document.getElementById('name');
+        let inputMessage = document.getElementById('message');
+        let chat = document.getElementById('chat');
+
+       //   EVENTS
+
+       btn.addEventListener('click', () => {
+           
+            // Create message object
+            let message = {
+                from: inputName.value,
+                msg: inputMessage.value
+            }
+
+            //  Add message to DOM
+            addMessageToDOM(message, true); //  message from me
+
+            //  Sedn to server
+            sendMessage(message)
+
+       })
+
+       function checkForMessages() {
+
+            //  Do not check if name is missing
+            if(inputName.value.length < 1)  
+                return;
+
+            //  1. check with server
+            let ajax = new XMLHttpRequest();
+            let to = inputName.value;
+
+            ajax.open('get','/messages/' + to);
+
+            ajax.onreadystatechange = () => {
+                if( ajax.readyState == 4 && ajax.status == 200) {
+
+
+                    //  Add messages to DOM
+
+                    let response = JSON.parse( ajax.responseText );
+                    let messages = response.messages;
+                    messages.forEach( message => {
+                        addMessageToDOM( message );
+                    })                    
+
+                }
+            }
+
+            ajax.send();
+
+       }
+
+       function sendMessage(message) {
+           
+            let ajax = new XMLHttpRequest();
+            
+            ajax.open('post', '/messages');
+
+            //  Set content type to JSON (to be able to send JSON)
+            ajax.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+            ajax.send( JSON.stringify({
+                message:message
+            }));
+
+       }
+       function addMessageToDOM(message, me = false) {
+
+            //  Create 3 divs
+            let div_messageBox = document.createElement('div');
+            div_messageBox.classList.add('message');
+
+            if(me)
+                div_messageBox.classList.add('my-message');
+
+            let div_name    = document.createElement('div');
+            div_name.classList.add('message-name');
+            div_name.textContent = message.from;
+
+            let div_messageBody = document.createElement('div');
+            div_messageBody.classList.add('message-body')
+            div_messageBody.textContent = message.msg;
+
+            //  Add divs to chat box
+            div_messageBox.appendChild( div_name );
+            div_messageBox.appendChild( div_messageBody );
+            chat.appendChild( div_messageBox );
+       }
+
+
+
+       //   Chec for messages every 250 ms
+       setInterval(()=>{
+        checkForMessages()
+       }, 4000)
+
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+        integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+        integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+        crossorigin="anonymous"></script>
+</body>
+</html>
